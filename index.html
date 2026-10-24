@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GAME//HUB</title>
+<!-- FLAT BUILD: keep ALL files in this one folder. Open index.html. Files used here: hub.css, storage.js, hub.js -->
+<link rel="stylesheet" href="hub.css"></head><body data-nav>
+<header><h1>GAME<span>//</span>HUB</h1><input id="q" placeholder="> search games..." autocomplete="off"><div id="clock">00:00:00</div><button id="pbtn" title="Profile & settings">👤</button></header>
+<div id="panel" class="hide"></div>
+<section class="hero"><h2>SELECT GAME</h2><p>Sign in to keep your scores and play history.</p><div class="stats" id="stats"><span>GAMES 04</span><span>USER GUEST</span><span>DATA: SAVED IN THIS BROWSER</span></div></section>
+<!-- Static fallback cards: visible even if hub.js fails to load; hub.js replaces them with live search results. -->
+<main id="grid">
+<a class="card" href="runner.html"><div class="idx">GAME 01</div><div class="em">🐅</div><h3>Wild Animal Runner</h3><p>Endless runner with 5 animals</p><span class="tag">Endless</span><span class="tag">Arcade</span><span class="play">▶ START</span></a>
+<a class="card" href="bounce.html"><div class="idx">GAME 02</div><div class="em">🔴</div><h3>Classic Bounce · Trap Lab Edition</h3><p>11 levels, 5 keys, every trap, hazard shop + built-in Trap Lab</p><span class="tag">Platformer</span><span class="tag">Traps</span><span class="tag">Lab</span><span class="play">▶ START</span></a>
+<a class="card" href="surfer.html"><div class="idx">GAME 03</div><div class="em">🚆</div><h3>Rail Rush</h3><p>3-lane subway runner: coins, jetpack, guards</p><span class="tag">Runner</span><span class="tag">3 Lanes</span><span class="play">▶ START</span></a>
+<a class="card" href="spacewar.html"><div class="idx">GAME 04</div><div class="em">🚀</div><h3>Spacewar Infinity</h3><p>12-level space shooter with 4 bosses</p><span class="tag">Shooter</span><span class="tag">Campaign</span><span class="play">▶ START</span></a>
+</main>
+<div id="frame" class="hide"><iframe title="game"></iframe><button class="xbtn" title="Close game">✕ CLOSE</button></div>
+<footer>GAMES ARE PURE HTML + CSS + JAVASCRIPT · SEE GUIDE.md TO ADD MORE</footer>
+<script src="compat.js"></script><script src="storage.js"></script><script src="hub.js"></script></body></html>

@@ -1,0 +1,12 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Classic Bounce · Trap Lab Edition</title>
+<style>/* WHY: strict black/white UI (only the ball has colour). HOW: wrapper is relative so overlay/touch buttons sit over the canvas. */
+body{margin:0;background:#000;color:#fff;font-family:monospace;text-align:center}#w{position:relative;margin:auto}canvas{width:100%;display:block;border:2px solid #fff;image-rendering:pixelated;touch-action:none}
+#ov{position:absolute;top:0;right:0;bottom:0;left:0;background:#000d;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+button{background:#000;color:#fff;border:2px solid #fff;padding:8px 14px;font:inherit;cursor:pointer}button:hover{background:#fff;color:#000}
+.sw{width:34px;height:34px;border-radius:50%;padding:0;margin:3px}#t{display:none;position:absolute;bottom:6px;width:100%;justify-content:space-between;padding:0 8px;box-sizing:border-box}#t button{width:64px;height:64px;font-size:1.5rem;opacity:.7;touch-action:none}a{color:#fff}
+@media(pointer:coarse),(max-width:800px){#t{display:flex;position:relative;bottom:auto;margin:8px 0 14px}#ui,#ov{overflow:auto;justify-content:flex-start}#ui button,#ov button{padding:5px 9px;font-size:.78rem;margin:2px}#ui h1,#ui h2,#ov h1,#ov h2{font-size:1rem;margin:2px}#ui small,#ov p{font-size:.62rem;margin:2px}}   /* phones: touch pad sits BELOW the game, menus are compact */#lab{display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:200;background:#000}#lab iframe{width:100%;height:100%;border:0;display:block}#labx{position:absolute;right:8px;bottom:8px;z-index:2;opacity:.8;padding:5px 10px}
+@media(max-width:480px){#ov,#ui{position:fixed;top:46px;left:0;right:0;bottom:0;z-index:60;background:#000e;overflow:auto;justify-content:flex-start}#ov button,#ui button{padding:8px 10px;font-size:.9rem}}html.kp #t,html.lite #t{display:none!important}
+</style></head><body>
+<div id="w"><canvas id="c" width="640" height="360"></canvas><div id="ov"></div>
+<div id="t"><span><button id="bl">◀</button><button id="br">▶</button></span><span><button id="bp">⏸</button><button id="bd">▼</button><button id="bj">▲</button></span></div></div>
+<script src="compat.js"></script><script src="storage.js"></script><script src="shell.js" data-home="index.html"></script><script src="bounce.js"></script></body></html>

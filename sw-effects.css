@@ -1,0 +1,12 @@
+/* VISUAL EFFECTS built with CSS only: star layers, nebula, scanlines (optional) and the damage flash. */
+#space{position:fixed;top:0;right:0;bottom:0;left:0;z-index:0;overflow:hidden}#space i{position:absolute;top:-100%;right:0;bottom:0;left:0;background-repeat:repeat}
+#space .l1{background-image:radial-gradient(1px 1px at 20px 30px,#fff,transparent),radial-gradient(1px 1px at 90px 120px,#9cf,transparent),radial-gradient(1px 1px at 160px 60px,#fff,transparent);background-size:200px 200px;animation:fall 40s linear infinite;opacity:.5}
+#space .l2{background-image:radial-gradient(1.6px 1.6px at 50px 80px,#fff,transparent),radial-gradient(1.6px 1.6px at 130px 20px,#c9f,transparent);background-size:260px 260px;animation:fall 22s linear infinite;opacity:.7}
+#space .l3{background-image:radial-gradient(2.2px 2.2px at 70px 40px,#fff,transparent);background-size:340px 340px;animation:fall 12s linear infinite}
+#space .neb{background:radial-gradient(ellipse at 20% 30%,#7c4dff44,transparent 50%),radial-gradient(ellipse at 80% 70%,#ff2bd633,transparent 50%),radial-gradient(ellipse at 60% 10%,#00e5ff22,transparent 45%)}
+@keyframes fall{to{transform:translateY(100%)}}
+#flash{position:fixed;top:0;right:0;bottom:0;left:0;z-index:15;background:#f33;opacity:0;pointer-events:none;transition:opacity .25s}#flash.on{opacity:.35;transition:none}
+.scan{position:fixed;top:0;right:0;bottom:0;left:0;z-index:16;pointer-events:none;display:none;background:repeating-linear-gradient(0deg,#0000 0 2px,#0003 2px 3px)}body.crt .scan{display:block}body.noFlash #flash{display:none}
+
+/* HOME button back to the hub (flat build) */
+#homeBtn{position:fixed;left:8px;top:8px;left:max(8px,env(safe-area-inset-left));top:max(8px,env(safe-area-inset-top));z-index:30;font:700 12px 'Courier New',monospace;letter-spacing:2px;color:#39ff88;border:1px solid #39ff88;background:#04140acc;padding:5px 10px;border-radius:4px;text-decoration:none;text-shadow:0 0 8px #39ff88;box-shadow:0 0 10px #39ff8844}#homeBtn:hover{background:#39ff88;color:#000}

@@ -1,0 +1,13 @@
+/* HUD + touch controls. HUD is positioned over the canvas; pointer-events are off so it never blocks the game. */
+#hud{position:fixed;top:0;right:0;bottom:0;left:0;z-index:10;pointer-events:none;padding:env(safe-area-inset-top) 10px 0;font-size:.8rem;text-shadow:0 0 6px #000;zoom:var(--ui)}
+#hud .row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-top:6px}#hud .small{font-size:.7rem;color:#9cf;justify-content:center;gap:14px}
+.bars{width:34vw;max-width:200px}.bar{height:11px;background:#0008;border:1px solid #fff4;margin-bottom:3px;border-radius:3px;overflow:hidden}.bar b{display:block;height:100%}
+.hp b{background:linear-gradient(90deg,#ff5252,#ff8a80)}.sh b{background:linear-gradient(90deg,#2979ff,#00e5ff)}.sp b{background:linear-gradient(90deg,#7c4dff,#ff2bd6)}.boss b{background:linear-gradient(90deg,#ff1744,#ff9100)}
+.mid{text-align:center}#hScore{font-size:1.5rem;color:var(--cy);text-shadow:0 0 10px var(--cy)}.right{text-align:right}#pauseBtn{pointer-events:auto;font-size:1.2rem;background:#0a1236;color:#fff;border:1px solid var(--cy);border-radius:6px;padding:4px 10px;cursor:pointer}
+#hBoss{text-align:center;margin:4px auto;width:60vw;max-width:420px}#hBoss .bar{height:14px}#hObj{text-align:center;color:#ffd740;font-size:.72rem}#hPow{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:3px}#hPow span{background:#0a1236cc;border:1px solid var(--vi);padding:1px 6px;border-radius:10px;font-size:.7rem}
+#hFps{position:absolute;bottom:6px;left:8px;color:#8f8}#hTip{position:absolute;bottom:18%;width:100%;left:0;text-align:center;color:#fff9;font-size:.85rem}
+/* touch controls */
+#touch{position:fixed;top:0;right:0;bottom:0;left:0;z-index:12;pointer-events:none}#joyZone{position:absolute;left:0;bottom:0;width:48vw;height:46vh;pointer-events:auto;touch-action:none}
+#joyKnob{position:absolute;width:70px;height:70px;border-radius:50%;background:#00e5ff44;border:2px solid var(--cy);display:none}
+#tBtns{position:absolute;right:10px;bottom:14px;right:max(10px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(2,78px);gap:10px;pointer-events:auto}
+#tBtns button{height:78px;border-radius:50%;font:700 .7rem inherit;color:#fff;background:#0a1236cc;border:2px solid var(--cy);touch-action:none}#bFire{grid-column:1/3;height:92px!important;width:92px;justify-self:end;border-color:var(--mg)!important}

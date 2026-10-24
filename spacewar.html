@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Spacewar Infinity</title>
+<!-- FLAT BUILD: every file is in ONE folder: sw-style/menu/game/effects.css + sw-*.js + storage.js (hub scores) -->
+<!-- 4 stylesheets: base, menus, in-game HUD/touch, visual effects -->
+<link rel="stylesheet" href="sw-style.css"><link rel="stylesheet" href="sw-menu.css"><link rel="stylesheet" href="sw-game.css"><link rel="stylesheet" href="sw-effects.css">
+</head><body>
+<!-- CSS-only animated space behind the canvas (parallax star layers + nebula) -->
+<div id="space"><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="neb"></i></div>
+<!-- The game world is drawn on ONE canvas (600x800 logical pixels), scaled to fit the window by main.js -->
+<canvas id="game"></canvas>
+<a id="homeBtn" href="index.html" title="Back to Game Hub">⏻ HOME</a><div id="flash"></div><div class="scan"></div>
+<!-- HUD: plain HTML on top of the canvas; game.js updates the text every frame -->
+<div id="hud" class="hidden">
+ <div class="row"><div class="bars"><div class="bar hp"><b id="hHp"></b></div><div class="bar sh"><b id="hSh"></b></div><div class="bar sp"><b id="hSp"></b></div></div>
+  <div class="mid"><div id="hScore">0</div><small>HI <span id="hHi">0</span> · x<span id="hCombo">1</span></small></div>
+  <div class="right"><button id="pauseBtn" aria-label="Pause">⏸</button><div id="hLives"></div></div></div>
+ <div class="row small"><span id="hLevel"></span><span id="hWave"></span><span id="hKills"></span><span id="hWeapon"></span></div>
+ <div id="hBoss" class="hidden"><span id="hBossName"></span><div class="bar boss"><b id="hBossBar"></b></div></div>
+ <div id="hObj"></div><div id="hPow"></div><div id="hFps"></div><div id="hTip"></div>
+</div>
+<!-- Touch controls (shown on touch devices or when forced in Settings) -->
+<div id="touch" class="hidden"><div id="joyZone"><div id="joyKnob"></div></div>
+ <div id="tBtns"><button id="bFire">FIRE</button><button id="bSpecial">SPECIAL</button><button id="bDash">DASH</button><button id="bSec">MISSILE</button></div></div>
+<div id="screen" class="screen hidden"></div><div id="toast"></div>
+<noscript>Spacewar Infinity needs JavaScript.</noscript>
+<!-- Classic scripts (no modules) so index.html works when opened directly from disk. ORDER MATTERS: each file only uses files above it. -->
+<script src="compat.js"></script><script src="storage.js"></script><script src="sw-storage.js"></script><script src="sw-settings.js"></script><script src="sw-audio.js"></script><script src="sw-controls.js"></script>
+<script src="sw-particles.js"></script><script src="sw-weapons.js"></script><script src="sw-player.js"></script><script src="sw-enemies.js"></script>
+<script src="sw-bosses.js"></script><script src="sw-levels.js"></script><script src="sw-game.js"></script><script src="sw-ui.js"></script><script src="sw-main.js"></script>
+</body></html>

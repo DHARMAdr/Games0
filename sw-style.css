@@ -1,0 +1,8 @@
+/* BASE STYLES: colours (CSS variables), page layout and accessibility modes toggled by settings.js via classes on <body>. */
+:root{--cy:#00e5ff;--bl:#2979ff;--vi:#7c4dff;--mg:#ff2bd6;--bg:#03040d;--panel:#0a1030cc;--tx:#e8f4ff;--ui:1}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:"Orbitron","Segoe UI",system-ui,sans-serif;touch-action:none;user-select:none}
+canvas#game{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);box-shadow:0 0 40px #00e5ff33,0 0 0 1px #00e5ff44;background:#000;z-index:1}
+.hidden{display:none!important}
+body.hc{--tx:#fff;--panel:#000}body.hc .btn{border-color:#fff;background:#000}body.hc #space{opacity:.2}
+body.big{font-size:118%}body.noMotion *{animation:none!important;transition:none!important}

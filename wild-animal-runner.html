@@ -1,0 +1,172 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Wild Animal Runner</title>
+<style>/* WHY: #w is position:relative so the #ui menu and touch buttons overlay the canvas like a game window. */
+body{margin:0;background:#111;color:#fff;font-family:system-ui;text-align:center;-webkit-user-select:none;user-select:none}#w{position:relative;margin:auto}canvas{width:100%;display:block;touch-action:none}
+#ui{position:absolute;top:0;right:0;bottom:0;left:0;background:#000b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px}
+#ui button{font-size:1rem;margin:3px;padding:9px 14px;border:1px solid #fff5;border-radius:10px;cursor:pointer;background:#1c1f2b;color:#fff}#ui button:hover,.pri{background:#4caf50!important}small{opacity:.7}
+/* Touch pad: only shown on touch/small screens. WHY pointer events: one code path for finger, mouse and pen. */
+#t{display:none;position:absolute;bottom:6px;left:0;width:100%;justify-content:space-between;padding:0 8px;box-sizing:border-box;pointer-events:none}#t button{pointer-events:auto;width:64px;height:64px;font-size:1.3rem;border-radius:50%;border:2px solid #fff6;background:#0008;color:#fff;touch-action:none}
+@media(pointer:coarse),(max-width:800px){#t{display:flex;position:relative;bottom:auto;margin:8px 0 14px}#ui,#ov{overflow:auto;justify-content:flex-start}#ui button,#ov button{padding:5px 9px;font-size:.78rem;margin:2px}#ui h1,#ui h2,#ov h1,#ov h2{font-size:1rem;margin:2px}#ui small,#ov p{font-size:.62rem;margin:2px}}   /* phones: touch pad sits BELOW the game, menus are compact */@media(max-width:480px){#ov,#ui{position:fixed;top:46px;left:0;right:0;bottom:0;z-index:60;background:#000e;overflow:auto;justify-content:flex-start}#ov button,#ui button{padding:8px 10px;font-size:.9rem}}html.kp #t,html.lite #t{display:none!important}
+</style></head><body>
+<div id="w"><canvas id="c" width="800" height="300"></canvas><div id="ui"></div>
+<div id="t"><span><button id="rd">▼</button></span><span><button id="rp">⏸</button><button id="re">⚡</button><button id="rj">▲</button></span></div></div>
+<script>/* inlined compat.js */
+/* compat.js — makes every page friendlier on ALL devices (desktop, laptop, tablet, phone AND button/keypad phones).
+   WHY: older browsers (e.g. KaiOS/Firefox 48, old iOS) lack newer features, and keypad phones have no mouse, touch or full keyboard.
+   HOW: (1) GH.LITE flag for weak devices  (2) a visible error banner instead of a silent blank page  (3) KEYPAD MAP: 2/4/6/8 = arrows, 5 = Enter/Jump, 0 = Space,
+        soft-left / Back / * = Esc (pause), soft-right = Enter, # = R(restart)  (4) arrow-key focus navigation in menus  (5) GH.hold(): press-and-hold buttons that work with Pointer Events OR touch+mouse.
+   Plain ES6 only (no async/await, no ?. , no object spread) so it runs on old engines.   IMPROVE: add more key layouts, a gamepad->keys bridge. */
+(function(){
+  var UA=navigator.userAgent||'',GH=window.GH=window.GH||{};
+  GH.LITE=/KaiOS|Opera Mini|Nokia|Series ?40|Symbian|UCBrowser|NetFront|MIDP|Maemo/i.test(UA)||(Math.min(screen.width||999,screen.height||999)<=360&&!('ontouchstart' in window));
+  // ---- (2) error banner: tell the user what is wrong instead of showing nothing
+  window.addEventListener('error',function(e){var b=document.getElementById('gh-err');if(!b){b=document.createElement('div');b.id='gh-err';b.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#500;color:#fff;font:12px monospace;padding:6px;text-align:center';(document.body||document.documentElement).appendChild(b)}
+    b.textContent='Warning: '+(e.message||'script error')+' - please use an up-to-date browser (Chrome, Firefox, Safari or Edge).'});
+  // ---- (3) keypad / old-browser key translation
+  var CODE={37:'ArrowLeft',38:'ArrowUp',39:'ArrowRight',40:'ArrowDown',13:'Enter',27:'Escape',32:'Space',16:'ShiftLeft',8:'Backspace'};
+  function codeOf(e){if(e.code)return e.code;if(CODE[e.keyCode])return CODE[e.keyCode];if(e.keyCode>=65&&e.keyCode<=90)return 'Key'+String.fromCharCode(e.keyCode);if(e.keyCode>=48&&e.keyCode<=57)return 'Digit'+(e.keyCode-48);if(e.keyCode>=96&&e.keyCode<=105)return 'Numpad'+(e.keyCode-96);return''}
+  function overlayOpen(){var ids=['ov','ui','screen','frame'];for(var i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el&&el.offsetWidth>0&&getComputedStyle(el).display!=='none'&&!el.classList.contains('hidden')&&!el.classList.contains('hide'))return el}return null}
+  GH.overlayOpen=overlayOpen;
+  var KEYPAD={'2':'ArrowUp','8':'ArrowDown','4':'ArrowLeft','6':'ArrowRight','0':'Space','#':'KeyR','*':'Escape','SoftLeft':'Escape','SoftRight':'Enter','Backspace':'Escape','EndCall':'Escape'};
+  var KP=GH.LITE||(window.matchMedia&&matchMedia('(pointer:none)').matches)||/[?&]keypad=1/.test(location.search);try{if(localStorage.getItem('gh_keypad')==='1')KP=true}catch(x){}
+  GH.keypad=KP;try{var hc=document.documentElement;hc.className+=(KP?' kp':'')+(GH.LITE?' lite':'')}catch(x){}   // keypad mode: auto on for keypad phones, or switch it on in the hub profile panel (gh_keypad)
+  function target(e){var k=e.key,c=codeOf(e),tag=(e.target&&e.target.tagName)||'',typing=/^(INPUT|TEXTAREA|SELECT)$/.test(tag),isNum=/^Numpad[0-9]$/.test(c);
+    if(typing&&k!=='SoftLeft'&&k!=='SoftRight')return null;      // never steal typing in text boxes
+    if(isNum)k=c.charAt(6);                                       // numpad digits always work (2/4/6/8/5)
+    var digit=/^[0-9]$/.test(k);if(digit&&!(KP||isNum))return null;
+    if((k==='*'||k==='#'||k==='Backspace'||k==='EndCall')&&!KP)return null;
+    if(k==='5')return overlayOpen()?'Enter':'Space';
+    return KEYPAD[k]||null}
+  function synth(type,code,orig){var ev;try{ev=new KeyboardEvent(type,{key:code.indexOf('Key')===0?code.slice(3).toLowerCase():code,code:code,bubbles:true,cancelable:true})}catch(x){return}
+    try{Object.defineProperty(ev,'__gh',{value:1})}catch(x){}window.dispatchEvent(ev)}
+  function onKey(e){if(e.__gh)return;var t=target(e);
+    if(t){e.stopImmediatePropagation();e.preventDefault();if(e.repeat&&e.type==='keydown')return;synth(e.type,t,e);return}
+    if(!e.code){var c=codeOf(e);if(c){e.stopImmediatePropagation();synth(e.type,c,e)}}}
+  window.addEventListener('keydown',onKey,true);window.addEventListener('keyup',onKey,true);
+  // ---- (4) menu focus navigation with arrows (keypad D-pad). Games keep their own arrow handling; this only moves the focus ring in open menus.
+  function visible(el){return el.offsetWidth>0&&el.offsetHeight>0&&!el.disabled}
+  function list(root){var a=root.querySelectorAll('button,a[href],input,select,[tabindex]'),out=[];for(var i=0;i<a.length;i++)if(visible(a[i]))out.push(a[i]);return out}
+  window.addEventListener('keydown',function(e){var c=e.code;if(c!=='ArrowUp'&&c!=='ArrowDown'&&c!=='ArrowLeft'&&c!=='ArrowRight')return;
+    var ov=overlayOpen(),root=ov||(document.body.hasAttribute('data-nav')?document.body:null);if(!root)return;
+    var ae=document.activeElement;if(ae&&/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)&&(c==='ArrowLeft'||c==='ArrowRight'))return;
+    var items=list(root);if(!items.length)return;var i=items.indexOf(ae);var d=(c==='ArrowDown'||c==='ArrowRight')?1:-1;i=i<0?(d>0?0:items.length-1):(i+d+items.length)%items.length;items[i].focus();e.preventDefault&&e.preventDefault()},false);
+  // ---- (5) press/hold helpers that work with Pointer Events (modern) or touch+mouse (old iOS/Android)
+  GH.hold=function(el,down,up){if(!el)return;var on=function(e){if(e.cancelable)e.preventDefault();down(e)},off=function(e){if(up)up(e)};
+    if(window.PointerEvent){el.addEventListener('pointerdown',on);['pointerup','pointerleave','pointercancel'].forEach(function(t){el.addEventListener(t,off)})}
+    else{el.addEventListener('touchstart',on);el.addEventListener('touchend',off);el.addEventListener('touchcancel',off);el.addEventListener('mousedown',on);el.addEventListener('mouseup',off);el.addEventListener('mouseleave',off)}};
+  GH.xy=function(e){var t=(e.changedTouches&&e.changedTouches[0])||(e.touches&&e.touches[0])||e;return{x:t.clientX,y:t.clientY}};
+  // base64(UTF-8) -> string for embedded pages (works in old browsers too)
+  GH.b64=function(b){return decodeURIComponent(escape(atob(b)))};
+})();
+
+</script><script>/* inlined storage.js */
+// WHY: ONE storage layer shared by hub AND games, so cloud sync later = change one object.
+// HOW: `Store.backend` exposes get/set that return Promises (so a cloud backend can be async). Default = browser localStorage (no server).
+// Written with plain Promises (no async/await) so it also runs on older browsers.  IMPROVE: write a cloud backend and do `Store.backend=cloud`.
+const Store={
+  backend:{get(k){var v=null;try{v=JSON.parse(localStorage.getItem(k)||'null')}catch(e){}return Promise.resolve(v)},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}return Promise.resolve()}},
+  // PIN hashing (SHA-256 when available, small fallback hash otherwise). IMPROVE: salt + server-side hashing; 6-digit PINs are weak.
+  hash(p){var fb=function(){var h=0,t='gh:'+p;for(var i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return 'f'+h};
+    try{if(window.crypto&&crypto.subtle&&window.TextEncoder)return crypto.subtle.digest('SHA-256',new TextEncoder().encode('gh:'+p)).then(function(b){return Array.prototype.map.call(new Uint8Array(b),function(x){return ('0'+x.toString(16)).slice(-2)}).join('')},function(){return fb()})}catch(e){}
+    return Promise.resolve(fb())},
+  users(){return this.backend.get('gh_users').then(function(u){return u||{}})},
+  user(){return localStorage.getItem('gh_session')},
+  signUp(id,pin){var self=this;id=id.trim().toLowerCase();if(!id||!/^\d{6}$/.test(pin))return Promise.resolve('Need a name/email and a 6-digit PIN');
+    return self.users().then(function(u){if(u[id])return 'Name already used';return self.hash(pin).then(function(h){u[id]={pin:h,hist:{}};return self.backend.set('gh_users',u).then(function(){localStorage.setItem('gh_session',id);return ''})})})},
+  signIn(id,pin){var self=this;id=id.trim().toLowerCase();return self.users().then(function(u){if(!u[id])return 'Wrong name or PIN';return self.hash(pin).then(function(h){if(u[id].pin!==h)return 'Wrong name or PIN';localStorage.setItem('gh_session',id);return ''})})},
+  signOut(){localStorage.removeItem('gh_session')},
+  // Games call this at game over: keeps best + last 20 plays per game for the profile history.
+  saveScore(game,score){var self=this,id=self.user();if(!id)return Promise.resolve();return self.users().then(function(u){if(!u[id])return;var h=u[id].hist[game]||(u[id].hist[game]={best:0,plays:[]});h.best=Math.max(h.best,score);h.plays.unshift({s:score,t:Date.now()});h.plays.length=Math.min(h.plays.length,20);return self.backend.set('gh_users',u)})}
+};
+
+// ===== SHARED DIFFICULTY. WHY: ONE setting (chosen in the hub or any game menu) changes speed, trap density, spacing, damage and lives in every game.
+// HOW: Store.diff() returns the numbers of the chosen level. spd=speed x, spawn=trap density x, gap=spacing x, dmg=damage x, lives, chase=guard window (frames), ko=1-hit KO, sw=lane-switching trains, missile=homing-missile interval (frames, 0=off).
+// IMPROVE: per-game overrides, custom difficulty sliders, unlockable "Insane" tier.
+Store.DIFFS={easy:{n:'EASY',spd:.85,spawn:.75,gap:1.25,dmg:.7,lives:7,chase:300,ko:false,sw:false,missile:0},
+ normal:{n:'NORMAL',spd:1,spawn:1,gap:1,dmg:1,lives:5,chase:480,ko:false,sw:false,missile:0},
+ hard:{n:'HARD',spd:1.15,spawn:1.3,gap:.85,dmg:1.3,lives:4,chase:720,ko:false,sw:true,missile:480},
+ nightmare:{n:'NIGHTMARE',spd:1.3,spawn:1.6,gap:.7,dmg:2,lives:3,chase:0,ko:true,sw:true,missile:300}};
+Store.diffKey=()=>{const k=localStorage.getItem('gh_diff');return Store.DIFFS[k]?k:'normal'};
+Store.diff=()=>Store.DIFFS[Store.diffKey()];
+Store.setDiff=k=>{if(Store.DIFFS[k])localStorage.setItem('gh_diff',k)};
+
+</script><script data-home="#">/* inlined shell.js */
+// shell.js — WHY: one shared "game window" helper used by EVERY game page: digital HOME button, size selector (S/M/L/FIT) and fullscreen.
+// HOW: injects its own CSS + a top bar, then sizes the element #w (the game wrapper) from the canvas aspect ratio. Size choice is remembered in localStorage 'gh_size'.
+// IMPROVE: add more sizes, a per-game size, or a settings drawer. New games only need a #w wrapper containing a <canvas> and this script tag with data-home.
+(function(){const home=document.currentScript.dataset.home||'index.html',w=document.getElementById('w'),cv=w.querySelector('canvas');
+ const css=document.createElement('style');css.textContent=`#shell{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-family:'Courier New',monospace}
+ #shell .home{color:#39ff88;border:2px solid #39ff88;background:#04140a;padding:6px 14px;border-radius:6px;text-decoration:none;font-weight:bold;letter-spacing:2px;text-shadow:0 0 8px #39ff88;box-shadow:0 0 10px #39ff8855,inset 0 0 10px #39ff8833;transition:.15s}
+ #shell .home:hover{background:#39ff88;color:#000;text-shadow:none}
+ #shell button{margin:0 3px;padding:6px 10px;background:#04140a;color:#39ff88;border:1px solid #39ff8888;border-radius:6px;font:inherit;cursor:pointer}#shell button.on{background:#39ff88;color:#000}
+ html.kp #shell button,html.lite #shell button{display:none}
+ @media(max-width:480px){#shell{padding:4px 6px}#shell .home{padding:4px 8px;font-size:.8rem}#shell button{padding:4px 7px;margin:0 2px;font-size:.8rem}}`;document.head.appendChild(css);
+ const bar=document.createElement('div');bar.id='shell';bar.innerHTML=`<a class="home" href="${home}"${home=='#'?' data-home-link':''}>⏻ HOME</a><span>${['S','M','L','FIT'].map(s=>`<button data-s="${s}">${s}</button>`).join('')}<button data-s="FS" title="Fullscreen">⛶</button></span>`;document.body.prepend(bar);
+ const sizes={S:480,M:760,L:1100};
+ // apply(): FIT = biggest size that fits BOTH width and height of the screen (keeps aspect). Fullscreen uses the whole screen.
+ function apply(){const s=localStorage.getItem('gh_size')||'FIT',a=cv.width/cv.height;let wd;
+  if(document.fullscreenElement)wd=Math.min(innerWidth,innerHeight*a);else wd=s=='FIT'?Math.min(innerWidth,(innerHeight-60)*a):Math.min(sizes[s],innerWidth);
+  w.style.width=wd+'px';w.style.maxWidth='none';bar.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.s==s))}
+ bar.onclick=e=>{const s=e.target.dataset&&e.target.dataset.s;if(!s)return;if(s=='FS'){document.fullscreenElement?document.exitFullscreen():w.requestFullscreen&&w.requestFullscreen();return}localStorage.setItem('gh_size',s);apply()};
+ addEventListener('resize',apply);document.addEventListener('fullscreenchange',apply);apply()})();
+
+</script><script>/* inlined runner.js */
+// ===== DATA. WHY: one table = add an animal in one line. FLIP: emoji art usually faces LEFT, so we mirror it to face the running direction (set FLIP=false if your device's emoji already faces right).
+const FLIP=true;
+const A=[{n:'Tiger',e:'🐅',jv:-13,sp:1.1,cost:0},{n:'Lion',e:'🦁',jv:-13,sp:1,cost:50},{n:'Elephant',e:'🐘',jv:-12,sp:.9,cost:100},{n:'Cheetah',e:'🐆',jv:-15,sp:1.25,cost:150},{n:'Crocodile',e:'🐊',jv:-12,sp:1,cost:200}];
+const BIOMES=[['Jungle','#3fbf4f'],['Savanna','#e0b050'],['Desert','#f0a050'],['Swamp','#8fbf3f'],['Snow','#8fd0ff']]; // accent colour per biome (ground line + HUD)
+// ===== SAVE. HOW: localStorage JSON. IMPROVE: route via Store.backend for cloud sync.
+const S=Object.assign({coins:0,best:0,own:[0],sel:0,snd:true,light:false},JSON.parse(localStorage.getItem('wr')||'{}'));const save=()=>localStorage.setItem('wr',JSON.stringify(S));
+let DF=Store.diff();function cycleDiff(){const ks=Object.keys(Store.DIFFS);Store.setDiff(ks[(ks.indexOf(Store.diffKey())+1)%ks.length]);DF=Store.diff()}
+const c=document.getElementById('c'),x=c.getContext('2d'),ui=document.getElementById('ui'),G=250;
+let tier=0,banner=0,st='menu',back=null,p,obs,items,spd,dist,got,power,cool,f=0,sh=false,flash=0,acc=0,lastT=0;
+// Stars: parallax dots (black sky + white stars, or white sky + black dots in light mode).
+const stars=[...Array(70)].map(()=>({x:Math.random()*800,y:Math.random()*230,r:Math.random()*2+1,p:Math.random()*.3+.05}));
+// ===== SOUND (WebAudio beeps; respects the Sound setting). IMPROVE: real samples + music.
+const AC=new (window.AudioContext||window.webkitAudioContext)();const beep=(fr,d=.08)=>{if(!S.snd)return;try{const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=fr;g.gain.value=.05;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}};
+// ===== WINDOWS. panel(html, backFn): Esc runs backFn; Enter/Space click the green .pri button.
+function panel(h,b){back=b||null;ui.innerHTML=h;ui.style.display='flex'}
+function menu(msg=''){st='menu';panel(`<b>Coins ${S.coins} · Best ${S.best}</b>${msg}<div>`+A.map((a,i)=>`<button onclick="pick(${i})" style="${S.sel==i?'outline:3px solid #fc0':''}">${a.e} ${a.n} ${S.own.includes(i)?'':'🔒'+a.cost}</button>`).join('')+`</div><button class="pri" onclick="start()">▶ Play (Enter)</button><button onclick="cycleDiff();menu()">Difficulty: ${DF.n}</button><button onclick="settings(menu)">⚙ Settings</button><small>Space/↑/tap jump · ↓/swipe duck · E smash · Esc pause</small>`)}
+function pick(i){if(S.own.includes(i))S.sel=i;else if(S.coins>=A[i].cost){S.coins-=A[i].cost;S.own.push(i);S.sel=i}save();menu()}
+function settings(ret){panel(`<h2>⚙ Settings</h2><button onclick="S.snd=!S.snd;save();settings(${ret.name})">Sound: ${S.snd?'ON':'OFF'}</button><button onclick="S.light=!S.light;save();settings(${ret.name})">Background: ${S.light?'White + black dots':'Black + white stars'}</button><button onclick="cycleDiff();settings(${ret.name})">Difficulty: ${DF.n}</button><button class="pri" onclick="${ret.name}()">Back (Esc)</button>`,ret)}
+function pauseMenu(){st='pause';panel(`<h2>⏸ Paused</h2><button class="pri" onclick="resume()">Resume (Esc / Enter)</button><button onclick="settings(pauseMenu)">⚙ Settings</button><button onclick="start()">Restart</button><button onclick="menu()">Main Menu</button>`,resume)}
+function resume(){st='play';ui.style.display='none'}
+function start(){DF=Store.diff();p={y:G,v:0,d:false};obs=[];items=[];spd=5*DF.spd;dist=0;got=0;power=0;cool=0;sh=false;tier=0;banner=0;st='play';ui.style.display='none'}
+// ===== INPUT. Enter/Space = confirm in windows; Esc = back/pause/resume.
+const jump=()=>{if(st=='play'&&p.y>=G){p.v=A[S.sel].jv;beep(500)}},duck=v=>{if(st=='play')p.d=v},smash=()=>{if(st=='play'&&!cool){power=90;cool=400;beep(150,.3)}};
+const confirmKey=()=>{const b=ui.style.display!='none'&&ui.querySelector('.pri');if(b){b.click();return true}};
+addEventListener('keydown',e=>{if(e.code=='Enter'){confirmKey();e.preventDefault()}
+ if(e.code=='Space'||e.code=='ArrowUp'){if(!confirmKey())jump();e.preventDefault()}
+ if(e.code=='ArrowDown'){duck(true);e.preventDefault()}if(e.code=='KeyE')smash();
+ if(e.code=='Escape'||e.code=='KeyP'){if(ui.style.display!='none'&&back)back();else if(st=='play')pauseMenu()}});
+addEventListener('keyup',e=>{if(e.code=='ArrowDown')duck(false)});
+let ty;c.addEventListener('touchstart',e=>{e.preventDefault();ty=e.touches[0].clientY;e.touches.length>1?smash():jump()});c.addEventListener('touchmove',e=>{if(e.touches[0].clientY-ty>30)duck(true)});c.addEventListener('touchend',()=>duck(false));
+// ===== SPAWN. Fair: min gap grows with speed. Birds fly high enough to duck under. 6% of coin drops are shields.
+function spawn(){const l=obs[obs.length-1];if(l&&800-l.x<(260+spd*14)*DF.gap)return;if(Math.random()>.03*DF.spawn)return;const t=Math.random();
+ obs.push(t>.88&&tier>=1?{x:820,w:34,h:34,y:G-34,k:'boulder',ex:2.5}:t<.4?{x:820,w:30,h:30,y:G-30,k:'rock'}:t<.7?{x:820,w:22,h:45,y:G-45,k:'bush'}:{x:820,w:36,h:20,y:G-62,k:'bird'});
+ if(Math.random()<.5)items.push({x:930,y:G-70-Math.random()*40,k:Math.random()<.06?'🛡️':'🪙'})}
+// ===== UPDATE (fixed 60Hz). Shield absorbs 1 hit; Smash destroys obstacles; milestone every 100 like the Dino game.
+function update(){f++;const a=A[S.sel],pd=Math.floor(dist/100);spd=Math.min(spd+.002*DF.spd,18*DF.spd);const tr=Math.floor(dist/1000);if(tr>tier){tier=tr;spd+=.9*DF.spd;banner=120;beep(300,.2);setTimeout(()=>beep(600,.3),150)}dist+=spd*a.sp/10;if(Math.floor(dist/100)>pd){flash=30;beep(1000,.1)}if(flash)flash--;
+ p.v+=.7;p.y=Math.min(G,p.y+p.v);if(p.y>=G)p.v=0;if(power)power--;if(cool)cool--;spawn();
+ const h=p.d&&p.y>=G?22:42,b={x:84,y:p.y-h,w:34,h};obs.forEach(o=>o.x-=spd*a.sp+(o.ex||0));items.forEach(q=>q.x-=spd*a.sp);obs=obs.filter(o=>o.x>-60);
+ for(const o of obs)if(b.x<o.x+o.w&&b.x+b.w>o.x&&b.y<o.y+o.h&&b.y+b.h>o.y){if(power){o.x=-99;beep(100)}else if(sh){sh=false;o.x=-99;beep(200,.2)}else return over()}
+ items=items.filter(q=>{if(Math.abs(q.x-100)<26&&Math.abs(q.y-(p.y-20))<32){q.k=='🪙'?got++:sh=true;beep(900,.05);return false}return q.x>-20})}
+function over(){const sc=Math.floor(dist);S.coins+=got;S.best=Math.max(S.best,sc);save();Store.saveScore('runner',sc);beep(80,.5);st='over';
+ panel(`<h2>💥 Game Over</h2><p>Score ${sc} · +${got} coins · Best ${S.best}</p><button class="pri" onclick="start()">Play Again (Enter)</button><button onclick="menu()">Main Menu</button>`,menu)}
+// ===== DRAW. Black sky + white twinkling stars (or white + black dots). Animal is mirrored (FLIP) so it faces right.
+function draw(){const L=S.light,bg=L?'#fff':'#000',fg=L?'#000':'#fff',bi=BIOMES[Math.floor(dist/300)%5];x.fillStyle=bg;x.fillRect(0,0,800,300);
+ x.fillStyle=fg;stars.forEach((s,i)=>{x.globalAlpha=.35+.65*Math.abs(Math.sin(f/45+i));x.fillRect(((s.x-f*(st=='play'?spd:1)*s.p)%800+800)%800,s.y,s.r,s.r)});x.globalAlpha=1;
+ x.fillStyle=bi[1];x.fillRect(0,G,800,2);x.fillStyle=fg;x.globalAlpha=.5;for(let i=0;i<9;i++)x.fillRect(((i*97-f*(spd||5))%800+800)%800,G+10+i%3*10,12+i%4*8,2);x.globalAlpha=1;
+ x.font='30px serif';obs.forEach(o=>x.fillText(o.k=='rock'?'🪨':o.k=='bush'?'🌵':o.k=='boulder'?'🌑':(f>>3&1?'🦅':'🕊️'),o.x,o.y+o.h));items.forEach(q=>x.fillText(q.k,q.x,q.y));
+ if(p){x.save();if(power)x.shadowColor='#fc0',x.shadowBlur=25;if(sh)x.shadowColor='#4cf',x.shadowBlur=20;const sz=44;x.font=sz+'px serif';x.translate(FLIP?70+sz:70,p.y+(p.y>=G?Math.sin(f/3)*2:0));if(FLIP)x.scale(-1,1);if(p.d&&p.y>=G)x.scale(1,.6);x.fillText(A[S.sel].e,0,0);x.restore()}
+ if(banner>0){banner--;x.fillStyle=fg;x.textAlign='center';x.font='bold 28px monospace';x.fillText('SPEED UP!  LEVEL '+(tier+1),400,110);x.textAlign='left'}
+ x.fillStyle=fg;x.font='bold 16px monospace';const sc=String(Math.floor(dist)).padStart(5,'0');x.textAlign='right';if(!flash||f>>2&1)x.fillText(`HI ${String(S.best).padStart(5,'0')}   ${sc}`,790,22);x.textAlign='left';
+ x.fillStyle=bi[1];x.fillText(`${bi[0]} ${DF.n} Lv${tier+1}  🪙${got} ${sh?'🛡️':''} ⚡${cool?Math.ceil(cool/60)+'s':'ready'}`,10,22)}
+// ===== LOOP: accumulator keeps speed identical on 60Hz and 144Hz screens.
+function frame(t){acc+=Math.min(100,t-lastT);lastT=t;while(acc>=16.67){if(st=='play')update();else f++;acc-=16.67}draw();requestAnimationFrame(frame)}
+spd=5;dist=0;obs=[];items=[];got=0;menu();requestAnimationFrame(frame);
+// ===== TOUCH PAD + MOUSE. WHY pointer events: same handler for finger/mouse/pen. Buttons mirror the keyboard (jump/duck/smash/pause).
+const $=id=>document.getElementById(id);$('rj').onpointerdown=e=>{e.preventDefault();confirmKey()||jump()};
+$('rd').onpointerdown=e=>{e.preventDefault();duck(true)};$('rd').onpointerup=$('rd').onpointerleave=$('rd').onpointercancel=()=>duck(false);
+$('re').onpointerdown=e=>{e.preventDefault();smash()};$('rp').onpointerdown=e=>{e.preventDefault();st=='play'?pauseMenu():0};c.onmousedown=()=>{if(!confirmKey())jump()};
+
+</script><script>/* HOME button: inside the all-in-one hub it asks the parent page to close this game */document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-home-link]");if(a){e.preventDefault();try{parent.postMessage({gh:"home"},"*")}catch(x){}}})</script></body></html>
